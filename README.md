@@ -24,7 +24,7 @@ pip install -r requirements.txt
 ```
 
 Assuming everything worked well, you can now run a jupyter notebook by executing the following commands.
-pip install -r requirements.txt
+
 ```bash
 conda activate mvt # not necessary if still active
 jupyter notebook
