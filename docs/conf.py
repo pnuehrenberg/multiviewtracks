@@ -10,8 +10,9 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
+import os
+import sys
+sys.path.append(os.path.abspath('..'))
 # sys.path.insert(0, os.path.abspath('.'))
 
 
@@ -30,10 +31,9 @@ release = 'August 2019'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['recommonmark']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.coverage', 'sphinx.ext.napoleon']
 
 master_doc = 'index'
-
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
