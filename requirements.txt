@@ -4,3 +4,4 @@ opencv-python
 matplotlib
 scipy
 scikit-learn
+jupyter
