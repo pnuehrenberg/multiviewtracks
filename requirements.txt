@@ -1,0 +1,6 @@
+numpy
+numpy-quaternion
+opencv-python
+matplotlib
+scipy
+scikit-learn
