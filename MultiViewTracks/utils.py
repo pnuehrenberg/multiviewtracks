@@ -32,12 +32,17 @@ def triangulate_point(pts_2d, views):
 def save(dump, file_name):
     '''Save to a .pkl file
 
-    Parameters:
-        dump (object): Python object to save
-        file_name (str): File path of saved object
+    Parameters
+    ----------
+    dump : object
+        Python object to save
+    file_name : str
+        File path of saved object
 
-    Returns:
-        bool: Successful save?
+    Returns
+    -------
+    bool
+        Successful save?
     '''
 
     with open(file_name, 'wb') as fid:
@@ -47,11 +52,15 @@ def save(dump, file_name):
 def load(file_name):
     '''Loads a python object from a .pkl file
 
-    Parameters:
-        file_name (str): File path of saved object
+    Parameters
+    ----------
+    file_name : str
+        File path of saved object
 
-    Returns:
-        object: Loaded python object
+    Returns
+    -------
+    object
+        Loaded python object
     '''
 
     with open(file_name, 'rb') as fid:
@@ -70,15 +79,22 @@ def read_next_bytes(fid, num_bytes, format_char_sequence, endian_character = '<'
 def plot_tracks_2d(tracks, ax=None, figsize=(30, 30), show=True, style='scatter', size=1.0):
     '''Plots the x and y components of tracks.
 
-    Parameters:
-        ax (matplotlib.pyplot.Axes, optional): axes for plotting
-        figsize (tuple(int, int), optional): size of the matplotlib output if ax is not specified. Defaults to (30, 30)
-        show (bool, optional): Show plot calling plt.show. Defaults to True.
-        style (str, optional): Plot style, one of "line" or "scatter". Defaults to "scatter".
-        size (float, optional): Line width or marker size. Defaults to 1.0.
+    Parameters
+    ----------
+    ax : matplotlib.pyplot.Axes, optional
+        Axes for plotting
+    figsize : (int, int), optional
+        Size of the matplotlib output if ax is not specified. Defaults to (30, 30)
+    show : bool, optional
+        Show plot calling plt.show. Defaults to True.
+    style : str, optional
+        Plot style, one of "line" or "scatter". Defaults to "scatter".
+    size : float, optional
+        Line width or marker size. Defaults to 1.0.
 
-    Returns:
-        matplotlib.pyplot.Axes
+    Returns
+    -------
+    matplotlib.pyplot.Axes
     '''
 
     assert style in ['scatter', 'line'], 'style argument should be either "scatter" or "line"'
@@ -97,12 +113,17 @@ def plot_tracks_2d(tracks, ax=None, figsize=(30, 30), show=True, style='scatter'
 def tracks_to_ply(tracks, uniform_color=None):
     '''Prepare tracks for ply file save.
 
-    Parameters:
-        tracks (dict): A tracks dictionary, not a pooled dictionary, must contain z component
-        uniform_color (tuple(int, int, int), optional): A shared color used for all tracks, otherwise random RGB generation
+    Parameters
+    ----------
+    tracks : dict
+        A tracks dictionary, not a pooled dictionary, must contain z component
+    uniform_color : (int, int, int), optional
+        A shared color used for all tracks, otherwise random RGB generation
 
-    Returns:
-        list: A list of lists of per individual pre-formatted ply points (x y z r g b a)
+    Returns
+    -------
+    list
+        A list of lists of per individual pre-formatted ply points (x y z r g b a)
     '''
 
     if not os.path.exists(file_name):
@@ -132,12 +153,17 @@ def sparse_to_ply(sparse):
 def write_ply(pts_ply, file_name):
     '''Write points to a .ply file for visualization
 
-    Parameters:
-        pts_ply (list): The prepared points in ply format, for example using tracks_to_ply
-        file_name (str): The file name of the saved file
+    Parameters
+    ----------
+    pts_ply : list
+        The prepared points in ply format, for example using tracks_to_ply
+    file_name : str
+        The file name of the saved file
 
-    Returns:
-        bool: Successful save?
+    Returns
+    -------
+    bool
+        Successful save?
     '''
 
     with open(file_name, 'w') as fid:

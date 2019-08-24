@@ -10,31 +10,50 @@ from .tracks import *
 class Scene:
     '''This is a class for triangulating tracks using the camera parameters of a COLMAP reconstruction.
 
-    Attributes:
-        model_path (str): Path to the COLMAP model .bin files
-        tracks_path (str): Path to the tracks .pkl files
-        fisheye (bool): Did you use OPENCV_FISHEYE in COLMAP reconstruction?
-        verbose (bool): Do you want a bit of verbosity?
-        extrinsics (dict): Stores COLMAP extrinsic camera parameters
-        intrinsics (dict): Stores COLMAP intrinsic camera parameters
-        cameras (dict): Stores Camera class instance for each reconstructed camera
-        tracks (dict): Stores tracks for each camera
-        tracks_triangulated (dict): Stores the triangulated multiple-view tracks, otherwise None
-        tracks_projected (dict): Stores the projected single-view tracks, otherwise None
-        tracks_3d (dict): Stores the combined 3d tracks, otherwise None
-        pts_3d (np.ndarray): Stores the sparse COLMAP point cloud, otherwise None
+    Attributes
+    ----------
+    model_path : str
+        Path to the COLMAP model .bin files
+    tracks_path : str
+        Path to the tracks .pkl files
+    fisheye : bool
+        Did you use OPENCV_FISHEYE in COLMAP reconstruction?
+    verbose : bool
+        Do you want a bit of verbosity?
+    extrinsics : dict
+        Stores COLMAP extrinsic camera parameters
+    intrinsics : dict
+        Stores COLMAP intrinsic camera parameters
+    cameras : dict
+        Stores Camera class instance for each reconstructed camera
+    tracks : dict
+        Stores tracks for each camera
+    tracks_triangulated : dict
+        Stores the triangulated multiple-view tracks, otherwise None
+    tracks_projected : dict
+        Stores the projected single-view tracks, otherwise None
+    tracks_3d : dict
+        Stores the combined 3d tracks, otherwise None
+    pts_3d : np.ndarray
+        Stores the sparse COLMAP point cloud, otherwise None
     '''
 
     def __init__(self, model_path, tracks_path, fisheye, verbose=True):
         '''
         The constructor of Scene class objects.
 
-        Parameters:
-            model_path (str): Path to the COLMAP model .bin files
-            tracks_path (str): Path to the tracks .pkl files
-            fisheye (bool): Did you use OPENCV_FISHEYE in COLMAP reconstruction?
-            camera_names (list): Contains the camera names (image prefixes) read from the COLMAP reconstruction
-            verbose (bool, optional): Do you want a bit of verbosity? Defaults to True
+        Parameters
+        ----------
+        model_path : str
+            Path to the COLMAP model .bin files
+        tracks_path : str
+            Path to the tracks .pkl files
+        fisheye : bool
+            Did you use OPENCV_FISHEYE in COLMAP reconstruction?
+        camera_names : list
+            Contains the camera names (image prefixes) read from the COLMAP reconstruction
+        verbose : bool, optional
+            Do you want a bit of verbosity? Defaults to True
         '''
 
         self.model_path = model_path
@@ -306,12 +325,17 @@ class Scene:
     def scale(self, camera_ids, world_distance):
         '''Scales the tracks and 3d point cloud according to a known camera-to-camera distance.
 
-        Parameters:
-            camera_ids (tuple(int, int)): The camera ids used to calculated the distance for scaling
-            world_distance (float): The known real-world distance between the two specified cameras
+        Parameters
+        ----------
+        camera_ids : (int, int)
+            The camera ids used to calculated the distance for scaling
+        world_distance : float
+            The known real-world distance between the two specified cameras
 
-        Returns:
-            np.ndarray: The reconstruction errors calculated as the difference between reconstruted and measured distance
+        Returns
+        -------
+        np.ndarray
+            The reconstruction errors calculated as the difference between reconstruted and measured distance
         '''
 
         cameras = [self.cameras[camera_ids[0]], self.cameras[camera_ids[1]]]

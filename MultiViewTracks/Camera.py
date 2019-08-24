@@ -10,35 +10,59 @@ from .tracks import *
 class Camera:
     '''This is a class containing per camera preprocessing methods for triangulating tracks using the Scene class.
 
-    Attributes:
-        id (int): The camera id within a COLMAP reconstruction
-        name (str): A common prefix used for all images of this camera in a COLMAP reconstruction
-        fisheye (bool): Was OPENCV_FISHEYE used as COLMAP camera model?
-        image_names (np.ndarray): Contains the image names of the reconstructed views of this camera
-        view_idx (np.ndarray): Contains the frame indices of all reconstructed views of this camera
-        n_views (int): Number of reconstrueced views of this camera
-        R (scipy.spatial.transform.Rotation): A Rotation instance holding extrinsic parameters (rotations) for this camera
-        r (np.ndarray): Stores the rotation matrices retrieved from R
-        t (np.ndarray): Stores COLMAP extrinsic camera parameters for each view of this camera
-        k (np.ndarray): The camera matrix of this camera
-        d (np.ndarray): The distortion parameters of this camera
-        tracks (dict): Contains the tracks visible from this camera or None
-        tracks_undistorted (dict): Contains undistorted tracks from Camera.undistort_tracks or None
-        tracks_projected (dict): Contains transformed tracks from Camera.transform_tracks or None
-        verbose (bool): Do you want some verbosity? Defaults to true
+    Attributes
+    ----------
+    id : int
+        The camera id within a COLMAP reconstruction
+    name : str
+        A common prefix used for all images of this camera in a COLMAP reconstruction
+    fisheye : bool
+        Was OPENCV_FISHEYE used as COLMAP camera model?
+    image_names : np.ndarray
+        Contains the image names of the reconstructed views of this camera
+    view_idx : np.ndarray
+        Contains the frame indices of all reconstructed views of this camera
+    n_views : int
+        Number of reconstrueced views of this camera
+    R : scipy.spatial.transform.Rotation
+        A Rotation instance holding extrinsic parameters (rotations) for this camera
+    r : np.ndarray
+        Stores the rotation matrices retrieved from R
+    t : np.ndarray
+        Stores COLMAP extrinsic camera parameters for each view of this camera
+    k : np.ndarray
+        The camera matrix of this camera
+    d : np.ndarray
+        The distortion parameters of this camera
+    tracks : dict
+        Contains the tracks visible from this camera or None
+    tracks_undistorted : dict
+        Contains undistorted tracks from Camera.undistort_tracks or None
+    tracks_projected : dict
+        Contains transformed tracks from Camera.transform_tracks or None
+    verbose : bool
+        Do you want some verbosity? Defaults to true
     '''
 
     def __init__(self, id, name, fisheye, extrinsics, intrinsics, tracks, verbose=True):
         '''The constructor of Camera class objects.
 
-        Parameters:
-            id (int): The camera id within a COLMAP reconstruction
-            name (str): A common prefix used for all images of this camera in a COLMAP reconstruction
-            fisheye (bool): Was OPENCV_FISHEYE used as COLMAP camera model?
-            extrinsics (dict): A dictionary storing COLMAP extrinsic parameters of this camera
-            intrinsics (np.ndarray): COLMAP intrinsic camera parameters
-            tracks (dict): The tracks visible from this camera or None
-            verbose (bool, optional): Do you want some verbosity? Defaults to true
+        Parameters
+        ----------
+        id : int
+            The camera id within a COLMAP reconstruction
+        name : str
+            A common prefix used for all images of this camera in a COLMAP reconstruction
+        fisheye : bool
+            Was OPENCV_FISHEYE used as COLMAP camera model?
+        extrinsics : dict
+            A dictionary storing COLMAP extrinsic parameters of this camera
+        intrinsics : np.ndarray
+            COLMAP intrinsic camera parameters
+        tracks : dict
+            The tracks visible from this camera or None
+        verbose : bool, optional
+            Do you want some verbosity? Defaults to true
         '''
 
         self.id = id
@@ -160,13 +184,19 @@ class Camera:
     def position(self, idx, i, kind=''):
         '''Returns the position of individual i at the specified frame index.
 
-        Parameters:
-            idx (int): The frame index
-            i (int): The individual's identity
-            kind ('str', optional): One of "", "undistorted", "projected". Defaults to ""
+        Parameters
+        ----------
+        idx : int
+            The frame index
+        i : int
+            The individual's identity
+        kind : str, optional
+            One of "", "undistorted", "projected". Defaults to ""
 
-        Returns:
-            np.ndarray: The position of individual i at frame index idx
+        Returns
+        -------
+        np.ndarray
+            The position of individual i at frame index idx
         '''
 
         assert idx in self.frames_in_view(i), 'Individual {} not in view {} of camera {} | {}'.format(i, idx, self.id, self.name)

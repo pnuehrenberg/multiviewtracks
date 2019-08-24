@@ -35,11 +35,16 @@ def rotate_tracks(tracks, pca):
     '''Rotate tracks with a given pca transform.
 
     Parameters
-        tracks (dict): A dictionary containing the tracks
-        pca (sklearn.decomposition.PCA): A fitted PCA instance used for transformation
+    ----------
+    tracks : dict
+        A dictionary containing the tracks
+    pca : sklearn.decomposition.PCA
+        A fitted PCA instance used for transformation
 
-    Returns:
-        dict: The rotated tracks
+    Returns
+    -------
+    dict
+        The rotated tracks
     '''
 
     pooled = tracks_to_pooled(tracks)
@@ -54,11 +59,16 @@ def scale_tracks(tracks, scale):
     '''Scale tracks with a given scale.
 
     Parameters
-        tracks (dict): A dictionary containing the tracks
-        scale (float): The scale used for transformation
+    ----------
+    tracks : dict
+        A dictionary containing the tracks
+    scale : float
+        The scale used for transformation
 
-    Returns:
-        dict: The scales tracks
+    Returns
+    -------
+    dict
+        The scales tracks
     '''
 
     pooled = tracks_to_pooled(tracks)
@@ -95,7 +105,7 @@ def interpolate_tracks(tracks):
     return tracks_interpolated
 
 def interpolate_subtracks(sub_tracks):
-    '''Linearly interpolate X, Y and Z components of subtrack dictionary.'''
+    '''Linearly interpolate X, Y and Z components of sub-track dictionary.'''
 
     assert 'IDENTITIES' in sub_tracks and not 'FRAME_IDX' in sub_tracks, 'Sub-tracks should be in sub-tracks dictionary format'
     for i in sub_tracks['IDENTITIES']:
@@ -125,12 +135,17 @@ def trajectory_from_subtrajectories(sub_trajectories):
 def tracks_to_subtracks(tracks, max_dist):
     '''Split tracks into sub-trajectories.
 
-    Paramteters:
-        tracks (dict): The tracks dictionary
-        max_dist (float): Maximum distance between consequtive frames that is allowed in a sub-trajectory
+    Parameters
+    ----------
+    tracks : dict
+        The tracks dictionary
+    max_dist : float
+        Maximum distance between consequtive frames that is allowed in a sub-trajectory
 
-    Returns:
-        dict: tracks dictionary with sub-trajectories
+    Returns
+    -------
+    dict
+        Tracks dictionary with sub-trajectories
     '''
 
     assert 'IDENTITIES' in tracks and 'FRAME_IDX' in tracks, 'Tracks should be in track dictionary format, if pooled, use tracks_from_pooled first'

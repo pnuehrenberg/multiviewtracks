@@ -1,5 +1,5 @@
-The Scene Class
-===============
+Scene Class Reference
+=====================
 
 .. autoclass:: MultiViewTracks.Scene
     :members:
