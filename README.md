@@ -1,9 +1,13 @@
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![Documentation Status](https://readthedocs.org/projects/multiviewtracks/badge/?version=latest)](https://multiviewtracks.readthedocs.io/en/latest/?badge=latest)
+
 # MultiViewTracks
 
 **mvt** integrates the results from structure-from-motion and video-based tracking to triangulate 3D trajectories.  
 **mvt** can be used to acquire highly-detailed animal trajectories for behavioral analyses.
 
 You can find a preprint on [biorxiv](https://www.biorxiv.org/content/10.1101/571232v1), where we used **mvt** in diverse aquatic environments.
+
+--------------
 
 ### Installation
 
@@ -39,11 +43,21 @@ sys.path.append('path/to/cloned/multiviewtracks') # edit this
 import MultiViewTracks as mvt
 ```
 
+--------------
+
 ### Usage
+
+Visit our [docs](https://multiviewtracks.readthedocs.io) for a more detailed description and documentation.
+
+Please refer to the example notebooks for [general usage](docs/examples/scene.ipynb) of the python module and for [visualization](docs/examples/visualization.ipynb). You can download the example dataset from [DataShare](https://datashare.mpcdf.mpg.de/s/WBi3T5Oh8QGjOQb).
+
+--------------
+
+### Acknowledgements
 
 We use [COLMAP](https://colmap.github.io), a general-purpose Structure-from-Motion (SfM) and Multi-View Stereo (MVS) pipeline to reconstruct camera paths and orientations from videos. This is necessary when using a moving camera setup for triangulating animal positions in 3D from multiple-view trajectories. We found COLMAP to be fit for this task, as it is well-documented, open-source and easily-accessible.
 
-Please refer to the example notebooks for [general usage](docs/examples/scene.ipynb) of the python module and for [visualization](docs/examples/visualization.ipynb). You can download the example dataset from [DataShare](https://datashare.mpcdf.mpg.de/s/WBi3T5Oh8QGjOQb).
+--------------
 
 ### License
 
