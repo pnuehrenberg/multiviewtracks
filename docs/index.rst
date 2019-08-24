@@ -12,8 +12,6 @@ About
 You can find a preprint on `biorxiv
 <https://www.biorxiv.org/content/10.1101/571232v1>`_, where we used **mvt** in diverse aquatic environments.
 
-Below, we visualized the 3D trajectories of a small fish school (*Lamprologus c.*) that was recorded while diving in Lake Tanganyika.
-
 .. raw:: html
    :file: reconstruction.html
 
