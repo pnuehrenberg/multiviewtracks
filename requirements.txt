@@ -6,4 +6,6 @@ scipy
 scikit-learn
 jupyter
 numba
+sphinx>=1.4
+ipykernel
 nbsphinx
