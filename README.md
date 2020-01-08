@@ -14,7 +14,7 @@ You can find a preprint on [biorxiv](https://www.biorxiv.org/content/10.1101/571
 The easiest way to get **mvt** up and running across most platforms is using a [*miniconda*](https://docs.conda.io/en/latest/miniconda.html) environment with jupyter notebooks for python3. Once conda is set up, a virtual environment can be created and activated by running the following code in a terminal (*Anaconda Promt* on Windows). Further, [*pip*](https://pypi.org/project/pip/) and [*git*](https://git-scm.com/) should be installed via conda to get **mvt** and its requirements.
 
 ```bash
-conda create -n mvt
+conda create -n mvt python=3.7
 conda activate mvt
 conda install git pip
 ```
