@@ -39,7 +39,9 @@ class Camera:
     tracks_undistorted : dict
         Contains undistorted tracks from Camera.undistort_tracks or None
     tracks_projected : dict
-        Contains transformed tracks from Camera.transform_tracks or None
+        Contains transformed tracks from Camera.project_tracks or None
+    tracks_reprojected : dict
+        Contains reprojected tracks from Camera.reproject_tracks or None
     verbose : bool
         Do you want some verbosity? Defaults to true
     '''
@@ -88,6 +90,7 @@ class Camera:
         self.tracks = tracks
         self.tracks_undistorted = None
         self.tracks_projected = None
+        self.tracks_reprojected = None
         self.verbose = verbose
         if self.verbose:
             print('  Initialized', self)
@@ -165,6 +168,53 @@ class Camera:
         self.tracks_projected = tracks_from_pooled(pooled)
         if self.verbose:
             print('  Projected tracks for Camera {} | {}'. format(self.id, self.name))
+
+    def reproject_tracks(self, tracks_3d):
+        '''Projects given tracks from world coordinates to image coordinates using r and t, and distortion model.
+        The tracks must be in the original coordinate system, i.e. they should not be rotated or scaled.
+
+        Parameters
+        ----------
+        tracks_3d : dict
+            The 3D tracks in the world coordiate system to be reprojected.
+        '''
+
+        if self.tracks is None:
+            return None
+        pooled_3d = tracks_to_pooled(tracks_3d)
+        pooled_2d = tracks_to_pooled(self.tracks)
+        pooled_reprojected = {'FRAME_IDX': [], 'IDENTITY': [], 'X': [], 'Y': []}
+        for frame_idx in np.unique(pooled_3d['FRAME_IDX']):
+            r = self.r[self.view_idx == frame_idx]
+            t = self.t[self.view_idx == frame_idx]
+            if r.size == 0 or t.size == 0:
+                continue
+            identities_3d = pooled_3d['IDENTITY'][pooled_3d['FRAME_IDX'] == frame_idx]
+            identities_2d = pooled_2d['IDENTITY'][pooled_2d['FRAME_IDX'] == frame_idx]
+            pts_3d = np.transpose([pooled_3d['X'][pooled_3d['FRAME_IDX'] == frame_idx],
+                                   pooled_3d['Y'][pooled_3d['FRAME_IDX'] == frame_idx],
+                                   pooled_3d['Z'][pooled_3d['FRAME_IDX'] == frame_idx]])
+            observed = np.isin(identities_3d, identities_2d)
+            pts_3d = pts_3d[observed]
+            identities_3d = identities_3d[observed]
+            if identities_3d.size == 0:
+                continue
+            if not self.fisheye:
+                pts_2d, _ = cv2.projectPoints(pts_3d, cv2.Rodrigues(r.reshape(3, 3))[0], t.reshape(3), self.k, self.d)
+            else:
+                pts_2d, _ = cv2.fisheye.projectPoints(pts_3d, cv2.Rodrigues(r.reshape(3, 3))[0], t.reshape(3), self.k, self.d)
+            pts_2d = pts_2d.reshape(-1, 2)
+            pooled_reprojected['X'].append(pts_2d[:, 0])
+            pooled_reprojected['Y'].append(pts_2d[:, 1])
+            pooled_reprojected['FRAME_IDX'].append([frame_idx] * observed.sum())
+            pooled_reprojected['IDENTITY'].append(identities_3d)
+        for key in pooled_reprojected:
+            pooled_reprojected[key] = np.concatenate(pooled_reprojected[key])
+        pooled_reprojected['IDENTITY'] = pooled_reprojected['IDENTITY'].astype(np.int)
+        pooled_reprojected['FRAME_IDX'] = pooled_reprojected['FRAME_IDX'].astype(np.int)
+        self.tracks_reprojected = tracks_from_pooled(pooled_reprojected)
+        if self.verbose:
+            print('  Reprojected tracks for Camera {} | {}'. format(self.id, self.name))
 
     def frames_in_view(self, i):
         '''Returns the frame indices in which individual i is observed in the camera views.'''
