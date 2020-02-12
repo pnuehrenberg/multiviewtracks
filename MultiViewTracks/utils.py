@@ -77,10 +77,12 @@ def read_next_bytes(fid, num_bytes, format_char_sequence, endian_character = '<'
     return struct.unpack(endian_character + format_char_sequence, data)
 
 def plot_tracks_2d(tracks, ax=None, figsize=(30, 30), show=True, style='scatter', size=1.0):
-    '''Plots the x and y components of tracks.
+    '''Plots the x and y components of tracks. Can be used to visualize reprojection errors.
 
     Parameters
     ----------
+    tracks : dict
+        A dictionary containing the tracks
     ax : matplotlib.pyplot.Axes, optional
         Axes for plotting
     figsize : (int, int), optional
@@ -88,7 +90,7 @@ def plot_tracks_2d(tracks, ax=None, figsize=(30, 30), show=True, style='scatter'
     show : bool, optional
         Show plot calling plt.show. Defaults to True.
     style : str, optional
-        Plot style, one of "line" or "scatter". Defaults to "scatter".
+        Plot style, one of "line", "scatter" or "errors". Defaults to "scatter".
     size : float, optional
         Line width or marker size. Defaults to 1.0.
 
@@ -97,15 +99,33 @@ def plot_tracks_2d(tracks, ax=None, figsize=(30, 30), show=True, style='scatter'
     matplotlib.pyplot.Axes
     '''
 
-    assert style in ['scatter', 'line'], 'style argument should be either "scatter" or "line"'
+    assert style in ['scatter', 'line', 'errors'], 'style argument should be either "scatter", "line" or "errors"'
+    assert style != 'errors' or (style == 'errors' and 'REPR_ERROR' in tracks[str(tracks['IDENTITIES'][0])]), 'calculate reprojection errors first'
     if ax is None:
         fig, ax = plt.subplots(figsize=figsize)
     for i in tracks['IDENTITIES']:
         if style == 'scatter':
             ax.scatter(tracks[str(i)]['X'], tracks[str(i)]['Y'], s=size)
+        elif style == 'errors':
+            mappable = ax.scatter(tracks[str(i)]['X'],
+                                  tracks[str(i)]['Y'],
+                                  s=size, c=tracks[str(i)]['REPR_ERROR'],
+                                  cmap=plt.get_cmap('Spectral_r'),
+                                  vmin=np.quantile(tracks[str(i)]['REPR_ERROR'], 0.05),
+                                  vmax=np.quantile(tracks[str(i)]['REPR_ERROR'], 0.95))
         elif style == 'line':
             ax.plot(tracks[str(i)]['X'], tracks[str(i)]['Y'], lw=size)
     ax.set_aspect('equal')
+
+    if style == 'errors':
+        fig = plt.gcf()
+        axis_bounds = ax.get_position().get_points()
+        cax = fig.add_axes([1.05,
+                            axis_bounds[0, 1],
+                            0.01,
+                            axis_bounds[1, 1] - axis_bounds[0, 1]])
+        fig.colorbar(mappable, cax=cax);
+
     if show:
         plt.show()
     return ax
@@ -143,7 +163,7 @@ def tracks_to_ply(tracks, uniform_color=None):
     return ply_tracks
 
 def sparse_to_ply(sparse):
-    '''Returns pre-formatted ply points from input points, use Scene.get_sparse'''
+    '''Returns pre-formatted ply points from input points, use Scene.get_pointcloud'''
 
     pts_ply = []
     for pt in sparse:
@@ -179,3 +199,36 @@ def write_ply(pts_ply, file_name):
                    'property uchar alpha\n' + \
                    'end_header\n' + \
                    '{}\n').format(len(pts_ply), ''.join(pts_ply)))
+
+def compute_reprojection_errors(tracks, tracks_reprojected, identities=[]):
+    '''Computes point-wise reprojection errors (distances) between tracks and their reprojections.
+
+    Parameters
+    ----------
+    tracks : dict
+        A dictionary containing the original tracks
+    tracks_reprojected : dict
+        A dictionary containing the reprojected tracks
+    identities : list, optional
+        A list of trajectory identities for which the reprojection errors should be computed
+
+    Returns
+    -------
+    list
+        A list of arrays containing the reprojection errors for each identity
+    array
+        An array containing the respective identities
+    '''
+
+    errors = []
+    if len(identities) == 0:
+        identities = tracks['IDENTITIES'][np.isin(tracks['IDENTITIES'], tracks_reprojected['IDENTITIES'])]
+    for i in identities:
+        shared = np.isin(tracks[str(i)]['FRAME_IDX'], tracks_reprojected[str(i)]['FRAME_IDX'])
+        shared_reprojected = np.isin(tracks_reprojected[str(i)]['FRAME_IDX'], tracks[str(i)]['FRAME_IDX'])
+        x = tracks[str(i)]['X'][shared]
+        x_reprojected = tracks_reprojected[str(i)]['X'][shared_reprojected]
+        y = tracks[str(i)]['Y'][shared]
+        y_reprojected = tracks_reprojected[str(i)]['Y'][shared_reprojected]
+        errors.append(np.sqrt(np.square(np.transpose([x, y]) - np.transpose([x_reprojected, y_reprojected])).sum(axis=1)))
+    return errors, identities

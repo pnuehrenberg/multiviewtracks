@@ -2,6 +2,7 @@ import os
 import numpy as np
 from glob import glob
 from sklearn.decomposition import PCA
+from plyfile import PlyData, PlyElement
 
 from .Camera import Camera
 from .utils import *
@@ -34,8 +35,8 @@ class Scene:
         Stores the projected single-view tracks, otherwise None
     tracks_3d : dict
         Stores the combined 3d tracks, otherwise None
-    pts_3d : np.ndarray
-        Stores the sparse COLMAP point cloud, otherwise None
+    point_cloud : np.ndarray
+        Stores the sparse or dense COLMAP point cloud otherwise None
     '''
 
     def __init__(self, model_path, tracks_path, fisheye, verbose=True):
@@ -45,7 +46,7 @@ class Scene:
         Parameters
         ----------
         model_path : str
-            Path to the COLMAP model .bin files
+            Path to the COLMAP model .bin files, and optionally the dense .ply file
         tracks_path : str
             Path to the tracks .pkl files
         fisheye : bool
@@ -66,7 +67,7 @@ class Scene:
         self.tracks_triangulated = None
         self.tracks_projected = None
         self.tracks_3d = None
-        self.sparse = None
+        self.point_cloud = None
 
     def get_extrinsics(self):
         '''Read the COLMAP extxrinsic camera parameters.
@@ -129,28 +130,43 @@ class Scene:
                 intrinsics[camera_id] = np.array(params)
         self.intrinsics = intrinsics
 
-    def get_sparse(self):
-        '''Read the COLMAP reconstruction point cloud.
+    def get_pointcloud(self):
+        '''Tries to read a dense point cloud (.ply file) from the model path. Otherwise reads the sparse point cloud from the COLMAP reconstruction.
 
         See https://github.com/colmap/colmap/blob/dev/scripts/python/read_model.py for reference.
         '''
 
-        points_3d_file = os.path.join(self.model_path, 'points3D.bin')
-        if self.verbose:
-            print('Reading intrinsics from {}'.format(points_3d_file))
-        pts_3d = []
-        with open(points_3d_file, 'rb') as fid:
-            n_pts = read_next_bytes(fid, 8, 'Q')[0]
-            for idx in range(n_pts):
-                binary_point_line_properties = read_next_bytes(fid, num_bytes=43, format_char_sequence='QdddBBBd')
-                pt_3d_idx = binary_point_line_properties[0]
-                xyz = np.array(binary_point_line_properties[1:4])
-                rgb = np.array(binary_point_line_properties[4:7])
-                error = np.array(binary_point_line_properties[7])
-                track_length = read_next_bytes(fid, num_bytes=8, format_char_sequence='Q')[0]
-                track_elems = read_next_bytes(fid, num_bytes=8 * track_length, format_char_sequence='ii' * track_length)
-                pts_3d.append(np.concatenate([xyz, rgb]))
-        self.sparse = np.array(pts_3d).reshape(-1, 6)
+        ply_files = glob(os.path.join(self.model_path, '*.ply'))
+        if len(ply_files) > 0:
+            points_3d_file = ply_files[0]
+
+        try:
+            if self.verbose:
+                print('Reading dense point cloud from {}'.format(points_3d_file))
+            ply_data = PlyData.read(points_3d_file)
+            self.point_cloud = np.transpose([ply_data['vertex']['x'],
+                                             ply_data['vertex']['y'],
+                                             ply_data['vertex']['z'],
+                                             ply_data['vertex']['red'],
+                                             ply_data['vertex']['green'],
+                                             ply_data['vertex']['blue']])
+        except:
+            points_3d_file = os.path.join(self.model_path, 'points3D.bin')
+            if self.verbose:
+                print('Reading sparse point cloud from {}'.format(points_3d_file))
+            pts_3d = []
+            with open(points_3d_file, 'rb') as fid:
+                n_pts = read_next_bytes(fid, 8, 'Q')[0]
+                for idx in range(n_pts):
+                    binary_point_line_properties = read_next_bytes(fid, num_bytes=43, format_char_sequence='QdddBBBd')
+                    pt_3d_idx = binary_point_line_properties[0]
+                    xyz = np.array(binary_point_line_properties[1:4])
+                    rgb = np.array(binary_point_line_properties[4:7])
+                    error = np.array(binary_point_line_properties[7])
+                    track_length = read_next_bytes(fid, num_bytes=8, format_char_sequence='Q')[0]
+                    track_elems = read_next_bytes(fid, num_bytes=8 * track_length, format_char_sequence='ii' * track_length)
+                    pts_3d.append(np.concatenate([xyz, rgb]))
+            self.point_cloud = np.array(pts_3d).reshape(-1, 6)
 
     def get_tracks(self):
         '''Read the tracks .pkl files. The file names should match the camera name, but can have a prefix (i.e. prefix[camera_name].pkl)'''
@@ -289,17 +305,28 @@ class Scene:
         pooled_triangulated = tracks_to_pooled(self.tracks_triangulated)
         pooled_projected = tracks_to_pooled(self.tracks_projected)
         pooled = {key: np.concatenate([pooled_triangulated[key], pooled_projected[key]]) \
-                  for key in pooled_triangulated}
+                  for key in pooled_projected}
         sort_idx = np.argsort(pooled['FRAME_IDX'])
         for key in pooled:
             pooled[key] = pooled[key][sort_idx]
         self.tracks_3d = tracks_from_pooled(pooled)
 
-    def rotate(self):
-        '''Rotates the tracks and 3d point cloud using PCA, so that the first two principal components of the camera paths are x and y'''
+    def rotate(self, camera_ids=[]):
+        '''Rotates the tracks and 3d point cloud using PCA, so that the first two principal components of the camera paths are x and y.
+
+        If reprojection errors were computed for the triangulated trajectories, they remain stored in tracks_triangulated.
+
+        Parameters
+        ----------
+        camera_ids : list, optional
+            The ids of the cameras used to calculated the two main axes of view point positions. Defaults to all cameras
+
+        '''
 
         pts_3d = []
-        for camera_id in self.cameras:
+        if len(camera_ids) == 0:
+            camera_ids = self.cameras
+        for camera_id in camera_ids:
             pts_3d.append(np.array([self.cameras[camera_id].projection_center(idx) \
                                        for idx in self.cameras[camera_id].view_idx]))
         pts_3d = np.concatenate(pts_3d)
@@ -308,7 +335,13 @@ class Scene:
         if self.tracks_triangulated is not None:
             if self.verbose:
                 print('Rotating triangulated multiple-view trajectories')
+            errors = None
+            if 'REPR_ERROR' in self.tracks_triangulated[str(self.tracks_triangulated['IDENTITIES'][0])]:
+                errors = {i: self.tracks_triangulated[str(i)]['REPR_ERROR'] for i in self.tracks_triangulated['IDENTITIES']}
             self.tracks_triangulated = rotate_tracks(self.tracks_triangulated, pca)
+            if errors is not None:
+                for i in self.tracks_triangulated['IDENTITIES']:
+                    self.tracks_triangulated[str(i)]['REPR_ERROR'] = self.tracks_triangulated[str(i)]['REPR_ERROR']
         if self.tracks_projected is not None:
             if self.verbose:
                 print('Rotating projected single-view trajectories')
@@ -317,13 +350,15 @@ class Scene:
             if self.verbose:
                 print('Rotating combined 3d trajectories')
             self.tracks_3d = rotate_tracks(self.tracks_3d, pca)
-        if self.sparse is not None:
+        if self.point_cloud is not None:
             if self.verbose:
-                print('Rotating sparse point cloud')
-            self.sparse[:, :3] = pca.transform(self.sparse[:, :3])
+                print('Rotating point cloud')
+            self.point_cloud[:, :3] = pca.transform(self.point_cloud[:, :3])
 
     def scale(self, camera_ids, world_distance):
         '''Scales the tracks and 3d point cloud according to a known camera-to-camera distance.
+
+        If reprojection errors were computed for the triangulated trajectories, they remain stored in tracks_triangulated.
 
         Parameters
         ----------
@@ -348,7 +383,13 @@ class Scene:
         if self.tracks_triangulated is not None:
             if self.verbose:
                 print('Scaling triangulated multiple-view trajectories')
+            errors = None
+            if 'REPR_ERROR' in self.tracks_triangulated[str(self.tracks_triangulated['IDENTITIES'][0])]:
+                errors = {i: self.tracks_triangulated[str(i)]['REPR_ERROR'] for i in self.tracks_triangulated['IDENTITIES']}
             self.tracks_triangulated = scale_tracks(self.tracks_triangulated, scale)
+            if errors is not None:
+                for i in self.tracks_triangulated['IDENTITIES']:
+                    self.tracks_triangulated[str(i)]['REPR_ERROR'] = self.tracks_triangulated[str(i)]['REPR_ERROR']
         if self.tracks_projected is not None:
             if self.verbose:
                 print('Scaling projected single-view trajectories')
@@ -357,9 +398,38 @@ class Scene:
             if self.verbose:
                 print('Scaling combined 3d trajectories')
             self.tracks_3d = scale_tracks(self.tracks_3d, scale)
-        if self.sparse is not None:
+        if self.point_cloud is not None:
             if self.verbose:
-                print('Scaling sparse point cloud')
-            self.sparse[:, :3] = self.sparse[:, :3] * scale
+                print('Scaling point cloud')
+            self.point_cloud[:, :3] = self.point_cloud[:, :3] * scale
         errors = (distances * scale) - world_distance
         return errors
+
+    def get_reprojection_errors(self):
+        '''Computes the minimum reprojection error for each triangulated 3D point.
+
+        Reprojection errors are stored in tracks_triangulated attribute.'''
+
+        if self.verbose:
+            print('Reprojecting tracks')
+        for cam_id in self.cameras:
+            self.cameras[cam_id].reproject_tracks(self.tracks_triangulated)
+        for i in self.tracks_triangulated['IDENTITIES']:
+            errors = []
+            frame_idx = []
+            for cam_id in self.cameras:
+                if self.cameras[cam_id].tracks_reprojected is None:
+                    continue
+                frame_idx.append(self.cameras[cam_id].tracks_reprojected[str(i)]['FRAME_IDX'])
+                repr_errors = np.concatenate(compute_reprojection_errors(self.tracks[cam_id],
+                                                                         self.cameras[cam_id].tracks_reprojected,
+                                                                         [i])[0])
+                errors.append(repr_errors)
+            frame_idx = np.concatenate(frame_idx)
+            errors = np.concatenate(errors)
+            min_errors = []
+            for idx in np.unique(frame_idx):
+                min_errors.append(errors[frame_idx == idx].min())
+            min_errors = np.array(min_errors)
+            frame_idx = np.unique(frame_idx).astype(np.int)
+            self.tracks_triangulated[str(i)]['REPR_ERROR'] = min_errors
