@@ -202,7 +202,7 @@ class Camera:
             if not self.fisheye:
                 pts_2d, _ = cv2.projectPoints(pts_3d, cv2.Rodrigues(r.reshape(3, 3))[0], t.reshape(3), self.k, self.d)
             else:
-                pts_2d, _ = cv2.fisheye.projectPoints(pts_3d, cv2.Rodrigues(r.reshape(3, 3))[0], t.reshape(3), self.k, self.d)
+                pts_2d, _ = cv2.fisheye.projectPoints(pts_3d.reshape(observed.sum(), 1, 3), cv2.Rodrigues(r.reshape(3, 3))[0], t.reshape(3), self.k, self.d)
             pts_2d = pts_2d.reshape(-1, 2)
             pooled_reprojected['X'].append(pts_2d[:, 0])
             pooled_reprojected['Y'].append(pts_2d[:, 1])
