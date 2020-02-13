@@ -1,4 +1,4 @@
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![Documentation Status](https://readthedocs.org/projects/multiviewtracks/badge/?version=latest)](https://multiviewtracks.readthedocs.io/en/latest/?badge=latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![Documentation Status](https://readthedocs.org/projects/multiviewtracks/badge/?version=latest)](https://multiviewtracks.readthedocs.io/en/latest/?badge=latest) [![DOI](https://zenodo.org/badge/204022383.svg)](https://zenodo.org/badge/latestdoi/204022383)
 
 # MultiViewTracks
 
