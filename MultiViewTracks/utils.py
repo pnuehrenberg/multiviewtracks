@@ -101,6 +101,10 @@ def plot_tracks_2d(tracks, ax=None, figsize=(30, 30), show=True, style='scatter'
 
     assert style in ['scatter', 'line', 'errors'], 'style argument should be either "scatter", "line" or "errors"'
     assert style != 'errors' or (style == 'errors' and 'REPR_ERROR' in tracks[str(tracks['IDENTITIES'][0])]), 'calculate reprojection errors first'
+    if style == 'errors':
+        errors = np.concatenate([tracks[str(i)]['REPR_ERROR'] for i in tracks['IDENTITIES']])
+        vmin = errors.min()
+        vmax = errors.max()
     if ax is None:
         fig, ax = plt.subplots(figsize=figsize)
     for i in tracks['IDENTITIES']:
@@ -111,8 +115,8 @@ def plot_tracks_2d(tracks, ax=None, figsize=(30, 30), show=True, style='scatter'
                                   tracks[str(i)]['Y'],
                                   s=size, c=tracks[str(i)]['REPR_ERROR'],
                                   cmap=plt.get_cmap('Spectral_r'),
-                                  vmin=np.quantile(tracks[str(i)]['REPR_ERROR'], 0.05),
-                                  vmax=np.quantile(tracks[str(i)]['REPR_ERROR'], 0.95))
+                                  vmin=vmin, # np.quantile(tracks[str(i)]['REPR_ERROR'], 0.05)
+                                  vmax=vmax) # np.quantile(tracks[str(i)]['REPR_ERROR'], 0.95)
         elif style == 'line':
             ax.plot(tracks[str(i)]['X'], tracks[str(i)]['Y'], lw=size)
     ax.set_aspect('equal')
@@ -159,14 +163,14 @@ def tracks_to_ply(tracks, uniform_color=None):
                                np.repeat(color[0],tracks[str(i)]['X'].size),
                                np.repeat(color[1],tracks[str(i)]['X'].size),
                                np.repeat(color[2],tracks[str(i)]['X'].size)])
-        ply_tracks.append(sparse_to_ply(pts_3d))
+        ply_tracks.append(pointcloud_to_ply(pts_3d))
     return ply_tracks
 
-def sparse_to_ply(sparse):
+def pointcloud_to_ply(point_cloud):
     '''Returns pre-formatted ply points from input points, use Scene.get_pointcloud'''
 
     pts_ply = []
-    for pt in sparse:
+    for pt in point_cloud:
         pts_ply.append('{:f} {:f} {:f} {:.0f} {:.0f} {:.0f} 0\n'.format(*pt))
     return pts_ply
 
