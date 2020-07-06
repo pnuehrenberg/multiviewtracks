@@ -193,13 +193,14 @@ class Scene:
             print('Creating cameras')
         for camera_id, camera_name in zip(sorted(self.intrinsics), self.camera_names):
             self.cameras[camera_id] = Camera(camera_id,
-                                            camera_name,
-                                            self.fisheye,
-                                            {key: self.extrinsics[key][self.extrinsics['CAMERA_ID'] == camera_id] \
-                                             for key in self.extrinsics},
-                                            self.intrinsics[camera_id],
-                                            self.tracks[camera_id],
-                                            self.verbose)
+                                             camera_name,
+                                             self.fisheye,
+                                             {key: self.extrinsics[key][self.extrinsics['CAMERA_ID'] == camera_id] \
+                                              for key in self.extrinsics},
+                                             self.intrinsics[camera_id],
+                                             self.tracks[camera_id],
+                                             self.verbose)
+        self.check_tracks()
 
     def interpolate_cameras(self):
         '''Interpolates the camera paths of the Scene using Camera.interpolate.'''
@@ -220,10 +221,23 @@ class Scene:
 
         for camera_id in self.cameras:
             self.cameras[camera_id].project_tracks()
+            
+    def check_tracks(self):
+        duplicates = []
+        for camera_id in self.cameras:
+            for i in self.cameras[camera_id].tracks['IDENTITIES']:
+                unique, counts = np.unique(self.cameras[camera_id].tracks[str(i)]['FRAME_IDX'], return_counts=True)
+                if unique[counts > 1].size > 0:
+                    duplicates.append((camera_id, i, unique[counts > 1].astype(np.int).tolist()))
+        assert len(duplicates) == 0, \
+        'Found duplicate positions in:\n' + \
+        ''.join(['Camera {} | {}: identity {}, frames {}\n'.format(
+                     duplicate[0], self.cameras[duplicate[0]].name, duplicate[1], duplicate[2]) \
+                 for duplicate in duplicates])
 
     def triangulate_multiview_tracks(self):
         '''Triangulate all trajectory points that are observed in more than one view.'''
-
+            
         if self.verbose:
             print('Triangulating multiple-view trajectories')
         self.undistort_tracks()
