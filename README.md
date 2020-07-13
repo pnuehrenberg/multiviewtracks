@@ -5,7 +5,7 @@
 **mvt** integrates the results from structure-from-motion and video-based tracking to triangulate 3D trajectories.  
 **mvt** can be used to acquire highly-detailed animal trajectories for behavioral analyses.
 
-You can find a preprint on [biorxiv](https://www.biorxiv.org/content/10.1101/571232v1), where we used **mvt** in diverse aquatic environments.
+You can find our paper at [movement ecology](https://movementecologyjournal.biomedcentral.com/articles/10.1186/s40462-020-00214-w), where we used **mvt** in diverse aquatic environments.
 
 --------------
 

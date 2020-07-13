@@ -9,7 +9,7 @@ MultiViewTracks
 About
 =====
 
-You can find a preprint on `biorxiv
+You can find can find our paper at `movement ecology
 <https://www.biorxiv.org/content/10.1101/571232v1>`_, where we used **mvt** in diverse aquatic environments.
 
 .. raw:: html
